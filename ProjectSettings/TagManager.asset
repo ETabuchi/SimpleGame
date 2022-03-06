@@ -6,11 +6,13 @@ TagManager:
   tags:
   - Ground
   - Help
+  - Block
+  - Ball
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Block
   - Water
   - UI
   - 
@@ -45,4 +47,7 @@ TagManager:
     locked: 0
   - name: Ground Level
     uniqueID: 785419169
+    locked: 0
+  - name: Forefront
+    uniqueID: 4259541089
     locked: 0
