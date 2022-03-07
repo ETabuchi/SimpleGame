@@ -11,23 +11,25 @@ public class Speed_Manager : MonoBehaviour
     public static float fast_forward; // How fast the game will be fast-forwarded
     public static bool game_paused;   // If the game is paused or not
     public static bool speed_boost;   // If the game is fast-forwarded or not
+    public static bool won;
     
     void Start()
     {
         game_speed = 1f;
         fast_forward = 1f; // Will increase upon pressing fast forward
         game_paused = false;
+        won = false;
     }
 
     void Update()
     {
-        if (Player_Lives.num_lives <= 0)
+        if (Player_Lives.num_lives <= 0 || won)
         {
             Player_UI.pause.gameObject.SetActive(false);
         }
 
         // P or Escape - Pause Game
-        if (Input.GetKeyDown(KeyCode.P) || Input.GetKeyDown(KeyCode.Escape) && Player_Lives.num_lives > 0)
+        if (Input.GetKeyDown(KeyCode.P) || Input.GetKeyDown(KeyCode.Escape) && Player_Lives.num_lives > 0 && !won)
         {
            if (game_paused)
            {
@@ -46,7 +48,7 @@ public class Speed_Manager : MonoBehaviour
         }
 
         // Shift - Fast Forward
-        if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift) && Player_Lives.num_lives > 0)
+        if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift) && Player_Lives.num_lives > 0 && !won)
         {
             if (speed_boost)
             {

@@ -19,7 +19,7 @@ public class Crosshair : MonoBehaviour
     {
         transform.position = Vector2.MoveTowards(transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition), 10f);
 
-        if (!Ball.is_active)
+        if (!Ball.is_active || Speed_Manager.game_paused || Speed_Manager.won)
         {
             crosshair.enabled = true;
         }

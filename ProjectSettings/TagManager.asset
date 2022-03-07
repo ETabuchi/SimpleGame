@@ -8,6 +8,7 @@ TagManager:
   - Help
   - Block
   - Ball
+  - Death
   layers:
   - Default
   - TransparentFX

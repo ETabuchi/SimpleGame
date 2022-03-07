@@ -62,7 +62,7 @@ public class Ball : MonoBehaviour
         if (num_remain <= 0)
         {
             Player_UI.victory.gameObject.SetActive(true); // Enable victory screen
-
+            Speed_Manager.won = true;
             Destroy(gameObject);                           // Destroy ball
             Destroy(GameObject.Find("Player"));            // Destroy player
         }
@@ -83,6 +83,43 @@ public class Ball : MonoBehaviour
             block_hit.Play();
             Destroy(collision.gameObject);
         }
+        else if (collision.gameObject.CompareTag("Death"))
+        {
+            is_active = false;
+
+            if (num_remain > 0)
+            {
+                if (Player_Lives.num_lives <= 1)
+                {
+                    Player_Lives.num_lives--;
+                    if (Player_UI.life_count != null)
+                    {
+                        Player_UI.life_count.text = Player_Lives.num_lives.ToString();
+                    }
+
+                    if (Player_UI.gameover != null)
+                    {
+                        Player_UI.gameover.gameObject.SetActive(true); // Enable game over screen
+                    }
+
+                    Destroy(gameObject);                           // Destroy ball
+                    Destroy(GameObject.Find("Player"));            // Destroy player
+                }
+                else
+                {
+                    Player_Lives.num_lives--;
+                    if (Player_UI.life_count != null)
+                    {
+                        Player_UI.life_count.text = Player_Lives.num_lives.ToString();
+                    }
+
+                    if (GetComponent<Transform>() != null && player_pos != null)
+                    {
+                        transform.position = player_pos.position + offset;
+                    }
+                }
+            }
+        }
         else
         {
             richochet.Play();
@@ -91,41 +128,6 @@ public class Ball : MonoBehaviour
         if (is_active)
         {
             move_dir = Vector2.Reflect(move_dir, collision.contacts[0].normal);
-        }
-    }
-
-    // Reset onto player if you fail to touch ball
-    private void OnBecameInvisible()
-    {
-        is_active = false;
-
-        if (num_remain > 0)
-        {
-            if (Player_Lives.num_lives <= 1)
-            {
-                Player_Lives.num_lives--;
-                if (Player_UI.life_count != null)
-                {
-                    Player_UI.life_count.text = Player_Lives.num_lives.ToString();
-                }
-                Player_UI.gameover.gameObject.SetActive(true); // Enable game over screen
-
-                Destroy(gameObject);                           // Destroy ball
-                Destroy(GameObject.Find("Player"));            // Destroy player
-            }
-            else
-            {
-                Player_Lives.num_lives--;
-                if (Player_UI.life_count != null)
-                {
-                    Player_UI.life_count.text = Player_Lives.num_lives.ToString();
-                }
-
-                if (GetComponent<Transform>() != null && player_pos != null)
-                {
-                    transform.position = player_pos.position + offset;
-                }
-            }
         }
     }
 }
