@@ -9,6 +9,7 @@ TagManager:
   - Block
   - Ball
   - Death
+  - Cuttable
   layers:
   - Default
   - TransparentFX
@@ -16,7 +17,7 @@ TagManager:
   - Block
   - Water
   - UI
-  - 
+  - Cuttable
   - 
   - 
   - 
