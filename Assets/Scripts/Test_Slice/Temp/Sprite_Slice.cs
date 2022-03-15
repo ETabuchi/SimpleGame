@@ -14,28 +14,29 @@ public class Sprite_Slice : MonoBehaviour
 
     public GameObject x;
     public GameObject y;
+    public int z = 0;
 
-    void Start()
+    void Awake()
     {
         pc = GetComponent<PolygonCollider2D>();
         rb = GetComponent<Rigidbody2D>();
         mask = transform.GetChild(0).gameObject;
-        StartCoroutine(SliceSpriteDown(x.transform.position, y.transform.position));
     }
 
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            //StartCoroutine(SliceSprite(x.transform.position, y.transform.position));
+            SpriteSlice(x.transform.position, y.transform.position);
         }
     }
 
+    // Creates copy of object and uses SliceSpriteUp and SliceSpriteDown to cut both objects
     void SpriteSlice(Vector2 start, Vector2 end)
     {
         // Create copy of object
-        GameObject copy = Instantiate(gameObject, transform.position, Quaternion.identity);
-        PolygonCollider2D pc_copy = copy.GetComponent<PolygonCollider2D>();
+        //StartCoroutine(Instantiate(gameObject, transform.position, Quaternion.identity).GetComponent<Sprite_Slice>().SliceSpriteUp(start, end));
+        StartCoroutine(SliceSpriteDown(start, end));
     }
 
     // Cuts everything and leves only upward half
@@ -69,14 +70,13 @@ public class Sprite_Slice : MonoBehaviour
             }
         }
 
-        GameObject new_mask = Instantiate(mask, new Vector3((start.x + end.x) / 2, (start.y + end.y) / 2, 0), Quaternion.identity, transform);
+        GameObject new_mask = Instantiate(mask, new Vector3((transform.position.y - intercept) / slope, transform.position.y), Quaternion.identity, transform);
         new_mask.SetActive(true);
         new_mask.transform.rotation = Quaternion.Euler(0, 0, angle + 180);
 
         // Case 1: Starting point is the rightmost point 
         if (start.x > end.x)
         {
-            new_mask.transform.rotation = Quaternion.Euler(0, 0, angle);
             for (int i = 0; i < col_points.Length; i++)
             {
                 // Move all points to right of line along line or at start_point / end_point
@@ -91,14 +91,16 @@ public class Sprite_Slice : MonoBehaviour
                     {
                         if (start_point.y > end_point.y)
                         {
-                            if (start_point.y > (transform.position.y + col_points[i].y))
+                            if (start_point.y < (transform.position.y + col_points[i].y))
+                            { col_points[i] = start_point - (Vector2)transform.position; }
+                            else if (start_point.x < (transform.position.y + col_points[i].y))
                             { col_points[i] = start_point - (Vector2)transform.position; }
                             else
                             { col_points[i].x = ((transform.position.y + col_points[i].y - intercept) / slope) - transform.position.x; }
                         }
                         else
                         {
-                            Debug.Log("hi2");
+                            Debug.Log("hi");
                             if (start_point.y < (transform.position.y + col_points[i].y))
                             { col_points[i] = start_point - (Vector2)transform.position; }
                             else
@@ -107,7 +109,7 @@ public class Sprite_Slice : MonoBehaviour
                     }
                     else // If point is closer to ending intersection point
                     {
-                        if (end_point.y < start_point.y)
+                        if (end_point.y > start_point.y)
                         {
                             if (end_point.y > (transform.position.y + col_points[i].y))
                             { col_points[i] = end_point - (Vector2)transform.position; }
@@ -116,8 +118,7 @@ public class Sprite_Slice : MonoBehaviour
                         }
                         else
                         {
-                            Debug.Log("hi");
-                            if (end_point.y < (transform.position.y + col_points[i].y))
+                            if (end_point.y > (transform.position.y + col_points[i].y))
                             { col_points[i] = end_point - (Vector2)transform.position; }
                             else
                             { col_points[i].x = ((transform.position.y + col_points[i].y - intercept) / slope) - transform.position.x; }
@@ -207,7 +208,7 @@ public class Sprite_Slice : MonoBehaviour
                     {
                         if (start_point.y < end_point.y)
                         {
-                            if (start_point.y > (transform.position.y + col_points[i].y))
+                            if (start_point.y < (transform.position.y + col_points[i].y))
                             {
                                 col_points[i] = start_point - (Vector2)transform.position;
                             }
@@ -218,7 +219,7 @@ public class Sprite_Slice : MonoBehaviour
                         }
                         else
                         {
-                            if (start_point.y < (transform.position.y + col_points[i].y))
+                            if (start_point.y > (transform.position.y + col_points[i].y))
                             {
                                 col_points[i] = start_point - (Vector2)transform.position;
                             }
@@ -267,14 +268,8 @@ public class Sprite_Slice : MonoBehaviour
     // Cuts everything and leaves only the downward half
     public IEnumerator SliceSpriteDown(Vector2 start, Vector2 end)
     {
-        // Create copy of object
-        // GameObject copy = Instantiate(gameObject, transform.position, Quaternion.identity);
-        // PolygonCollider2D pc_copy = copy.GetComponent<PolygonCollider2D>();
-
         // Get points of PolygonCollider2D
         Vector2[] col_points = pc.points;
-        //Vector2[] col_points_copy = pc_copy.points;
-        //GameObject copy_mask = copy.transform.GetChild(0).gameObject;
 
         // Calculate slope, y-intercept, and angle between two points
         float slope = (start.y - end.y) / (start.x - end.x);
@@ -282,28 +277,29 @@ public class Sprite_Slice : MonoBehaviour
         float angle = Mathf.Rad2Deg * Mathf.Atan2((start.y - end.y), (start.x - end.x));
 
         // Get two farmost intersection points
-        RaycastHit2D[] int_points = Physics2D.RaycastAll(start, end - start, LayerMask.GetMask("Cuttable"));
-        Vector2 start_point = Vector2.zero;
-        Vector2 end_point = Vector2.zero;
+        Vector2 start_point = Physics2D.Raycast(start, end - start, LayerMask.GetMask("Cuttable")).point;
+        Vector2 end_point = Physics2D.Raycast(end, start - end, LayerMask.GetMask("Cuttable")).point;
 
-        for (int i = 0; i < int_points.Length; i++)
+        GameObject new_mask;
+
+        if ((start.y - end.y) >= -0.1f && (start.y - end.y) <= 0.01f) // Horizontal Cut
         {
-            if (int_points[i].collider.gameObject == this.gameObject)
-            {
-                if (start_point == Vector2.zero)
-                {
-                    start_point = int_points[i].point; 
-                }
-                else
-                {
-                    end_point = int_points[i].point;
-                }
-            }
+            new_mask = Instantiate(mask, new Vector3(transform.position.x, start.y), Quaternion.identity, transform);
+        }
+        else if ((start.x - end.x) >= -0.01f && (start.x - end.x) <= 0.01f) // Vertical Cut
+        {
+            new_mask = Instantiate(mask, new Vector3(transform.position.x + start.x, transform.position.y), Quaternion.identity, transform);
+        }
+        else
+        {
+            new_mask = Instantiate(mask, new Vector3((transform.position.y - intercept) / slope, transform.position.y - start.y), Quaternion.identity, transform);
         }
 
-        GameObject new_mask = Instantiate(mask, new Vector3((start.x + end.x) / 2, (start.y + end.y) / 2, 0), Quaternion.identity, transform);
         new_mask.SetActive(true);
         new_mask.transform.rotation = Quaternion.Euler(0, 0, angle);
+
+        x.transform.position = start_point;
+        y.transform.position = end_point;
 
         // Case 1: Starting point is the rightmost point 
         if (start.x > end.x)
@@ -311,26 +307,28 @@ public class Sprite_Slice : MonoBehaviour
             for (int i = 0; i < col_points.Length; i++)
             {
                 // Move all points under line along line or at start_point / end_point
-                if ((transform.position.x + col_points[i].x) <= ((transform.position.y + col_points[i].y - intercept) / slope))
+                if ((transform.position.x + col_points[i].x) > ((transform.position.y + col_points[i].y - intercept) / slope))
                 {
                     // Calculate how far each point is to the points of intersection to check whether to put along line or intersection point
                     float start_dist = Vector2.Distance(start_point, (Vector2)transform.position + col_points[i]);
                     float end_dist = Vector2.Distance(end_point, (Vector2)transform.position + col_points[i]);
 
                     // If point is closer to starting intersection point
-                    if (start_dist <= end_dist)
+                    if (start_dist < end_dist)
                     {
                         if (start_point.y > end_point.y)
                         {
                             Debug.Log("hi");
-                            if (start_point.y < (transform.position.y + col_points[i].y))
+                            if (start_point.y > (transform.position.y + col_points[i].y))
                                 { col_points[i] = start_point - (Vector2) transform.position; }
+                            else if (start_point.x < (transform.position.x + col_points[i].x))
+                                { col_points[i] = start_point - (Vector2)transform.position; }
                             else
                                 { col_points[i].x = ((transform.position.y + col_points[i].y - intercept) / slope) - transform.position.x; }
                         }
                         else
                         {
-                            Debug.Log("hi2");
+                            Debug.Log("h");
                             if (start_point.y > (transform.position.y + col_points[i].y))
                                 { col_points[i] = start_point - (Vector2)transform.position; }
                             else
@@ -339,18 +337,17 @@ public class Sprite_Slice : MonoBehaviour
                     }
                     else // If point is closer to ending intersection point
                     {
+                        Debug.Log("hi");
                         if (end_point.y < start_point.y)
                         {
-                            Debug.Log("hi3");
-                            if (end_point.y < (transform.position.y + col_points[i].y))
+                            if (end_point.y > (transform.position.y + col_points[i].y))
                                 { col_points[i] = end_point - (Vector2)transform.position; }
                             else
                                 { col_points[i].x = ((transform.position.y + col_points[i].y - intercept) / slope) - transform.position.x; }
                         }
                         else
                         {
-                            Debug.Log("hi4");
-                            if (end_point.y < (transform.position.y + col_points[i].y))
+                            if (end_point.y > (transform.position.y + col_points[i].y))
                                 { col_points[i] = end_point - (Vector2)transform.position; }
                             else
                             { col_points[i].x = ((transform.position.y + col_points[i].y - intercept) / slope) - transform.position.x; }
@@ -490,68 +487,6 @@ public class Sprite_Slice : MonoBehaviour
             }
         }
 
-        /*
-        // Compare all collider points with calculated line
-        for (int i = 0; i < col_points.Length; i++)
-        {
-            // Move sprite mask to appropriate position
-            mask.transform.position = new Vector2((transform.position.y - intercept) / slope, transform.position.y);
-
-            
-            if (angle > 80 && angle < 110)
-            {
-                // Move all points to right of line along the line
-                if ((transform.position.x + col_points[i].x) > ((transform.position.y + col_points[i].y - intercept) / slope))
-                {
-                    col_points[i].x = ((transform.position.y + col_points[i].y - intercept) / slope) - transform.position.x;
-                }
-            }
-            else // Move all points above line along line
-            {
-                if (col_points[i].y > (slope * col_points[i].x + intercept))
-                {
-                    col_points[i].y = slope * col_points[i].x + intercept;
-                }
-            }
-           
-        }
-
-        // Repeat process for copied object
-        for (int j = 0; j < col_points_copy.Length; j++)
-        {
-            copy_mask.transform.position = new Vector2((transform.position.y - intercept) / slope, transform.position.y);
-
-            if (angle > 80 && angle < 110)
-            {
-                // Move all points to left of line along the line (for the copy)
-                if ((transform.position.x + col_points_copy[j].x) < ((transform.position.y + col_points_copy[j].y - intercept) / slope))
-                {
-                    col_points_copy[j].x = ((transform.position.y + col_points_copy[j].y - intercept) / slope) - transform.position.x;
-                }
-            }
-            else
-            {
-                if (col_points_copy[j].y < (slope * col_points_copy[j].x + intercept))
-                {
-                    col_points_copy[j].y = slope * col_points_copy[j].x + intercept;
-                }
-            }
-        }
-        */
-
-        /*
-        // Assign new points to collider
-        pc.points = col_points;
-        pc_copy.points = col_points_copy;
-
-        // Set sprite mask active
-        mask.SetActive(true);
-        copy_mask.SetActive(true);
-
-        // Rotate sprite mask appropriately
-        mask.GetComponent<Rigidbody2D>().rotation = angle;
-        copy_mask.GetComponent<Rigidbody2D>().rotation = angle + 180;
-        */
         pc.points = col_points;
         rb.gravityScale = 1;
         pc.isTrigger = false;
