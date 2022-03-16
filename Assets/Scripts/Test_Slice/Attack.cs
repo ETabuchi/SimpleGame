@@ -9,8 +9,8 @@ public class Attack : MonoBehaviour
     // Counting which part of the combo you are at
     private int low_combo_index;
     private int low_combo_length;
-    private int high_combo_index;
-    private int high_combo_length;
+    //private int high_combo_index;
+    //private int high_combo_length;
 
     public static bool combo_mode; // false - low, true - high
     public static bool is_attacking;
@@ -19,24 +19,24 @@ public class Attack : MonoBehaviour
     private float attack_delay; // delay once combo is finished
     private float combo_timer; // counts upwards as soon as you melee once
     private float combo_delay; // delay between combos 
-    private float attack_time;
+    //private float attack_time;
     private Animator anim;
 
     void Awake()
     {
         low_combo_index = 0;
         low_combo_length = 3;
-        high_combo_index = 0;
-        high_combo_length = 3;
+        //high_combo_index = 0;
+        //high_combo_length = 3;
         combo_mode = false; 
         is_attacking = false;
         can_attack = true;
 
         attack_timer = 0f;
-        attack_delay = 0.75f;
+        attack_delay = 1f;
         combo_timer = 0f;
-        combo_delay = 0.4f;
-        attack_time = 0;
+        combo_delay = 0.5f;
+        //attack_time = 0;
 
         anim = GetComponent<Animator>();
     }
@@ -53,7 +53,6 @@ public class Attack : MonoBehaviour
             if (Movement.touching_ground)
             {
                 is_attacking = true;
-                Movement.can_move = false;
 
                 // Ground combo
                 if (combo_mode) // High attacks
@@ -69,10 +68,14 @@ public class Attack : MonoBehaviour
                             combo_timer = 0f;
                             break;
                         case 1:
+                            anim.ResetTrigger("low_combo_one");
                             anim.SetTrigger("low_combo_two");
+                            anim.ResetTrigger("low_combo_three");
                             combo_timer = 0f;
                             break;
                         case 2:
+                            anim.ResetTrigger("low_combo_one");
+                            anim.ResetTrigger("low_combo_two");
                             anim.SetTrigger("low_combo_three");
                             combo_timer = 0f;
                             break;
@@ -108,7 +111,6 @@ public class Attack : MonoBehaviour
             is_attacking = false;
             combo_timer = 0f;
             low_combo_index = 0;
-            Movement.can_move = true;
         }
 
         if (!can_attack)
@@ -120,7 +122,13 @@ public class Attack : MonoBehaviour
         {
             attack_timer = 0f;
             can_attack = true;
-            Movement.can_move = true;
         }
+    }
+
+    void ResetLowCombo()
+    {
+        anim.ResetTrigger("low_combo_one");
+        anim.ResetTrigger("low_combo_two");
+        anim.ResetTrigger("low_combo_three");
     }
 }
