@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Player can move left and right
+// Player can jump
 public class Movement : MonoBehaviour
 {
     // Movement
@@ -10,6 +11,7 @@ public class Movement : MonoBehaviour
     private Vector2 move_dir;
     private float move_speed;
     private float jump_force;
+    public static bool can_jump;
     public static bool touching_ground;
     public static bool can_move;
 
@@ -17,7 +19,7 @@ public class Movement : MonoBehaviour
     private SpriteRenderer sprite;
     private Animator anim;
 
-    void Start()
+    private void Start()
     {
         // Movement
         rb = GetComponent<Rigidbody2D>();
@@ -25,35 +27,38 @@ public class Movement : MonoBehaviour
         move_speed = 1.3f;
         jump_force = 50f;
         touching_ground = true;
-        can_move = true;
+        can_move = false; // Start each level unable to move to activate your weapon
 
         // Visuals / Audio
         sprite = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>();
     }
 
-    void Update()
+    private void Update()
     {
-        if (Input.GetKey(KeyCode.D)) // Move right
+        if (can_move)
         {
-            if (!Input.GetKey(KeyCode.A))
+            if (Input.GetKey(KeyCode.D)) // Move right
             {
-                sprite.flipX = false;
+                if (!Input.GetKey(KeyCode.A))
+                {
+                    sprite.flipX = false;
+                }
             }
-        }
-        else if (Input.GetKey(KeyCode.A)) // Move left
-        {
-            sprite.flipX = true;
-        }
+            else if (Input.GetKey(KeyCode.A)) // Move left
+            {
+                sprite.flipX = true;
+            }
 
-        if (Input.GetKeyDown(KeyCode.Space) && GroundCheck()) // Jump
-        {
-            rb.AddForce(jump_force * Vector2.up, ForceMode2D.Impulse);
-        }
+            if (Input.GetKeyDown(KeyCode.Space) && GroundCheck()) // Jump
+            {
+                rb.AddForce(jump_force * Vector2.up, ForceMode2D.Impulse);
+            }
 
-        move_dir.x = Input.GetAxisRaw("Horizontal"); // Horizontal movement
-        GroundCheck();
-        MoveAnim();
+            move_dir.x = Input.GetAxisRaw("Horizontal"); // Horizontal movement
+            GroundCheck();
+            MoveAnim();
+        }
     }
 
     private void FixedUpdate()
@@ -65,7 +70,7 @@ public class Movement : MonoBehaviour
     }
 
     // Check if player is touching the ground to jump
-    bool GroundCheck()
+    private bool GroundCheck()
     {
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 1.5f, LayerMask.GetMask("Ground"));
         if (hit.collider != null)
@@ -81,7 +86,7 @@ public class Movement : MonoBehaviour
     }
 
     // Movement Animation Check
-    void MoveAnim()
+    private void MoveAnim()
     {
         if (Input.GetAxisRaw("Horizontal") == 0)
         {
